@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: academic_system
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secure_password_change_me
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: "your-secret-key-here-change-in-production"
+      DATABASE_URL: "postgresql://admin:secure_password_change_me@db:5432/academic_system"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn --bind 0.0.0.0:8000 --workers 4 config.wsgi"
+
+volumes:
+  postgres_data:
