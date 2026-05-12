@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Academic Intelligence System{% endblock %}
+
+{% block content %}
+
+<div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <button id="themeToggleLogin" class="btn btn-outline-secondary btn-sm" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Toggle Dark Mode">
+        <i class="bi bi-moon" id="themeIconLogin"></i>
+    </button>
+</div>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header text-center py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-mortarboard-fill me-2 text-primary"></i>
+                    Academic Intelligence System
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <h5 class="card-title text-center mb-4">Sign In</h5>
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Invalid username or password. Please try again.
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">
+                            <i class="bi bi-person me-1"></i>Username
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label">
+                            <i class="bi bi-lock me-1"></i>Password
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center text-muted py-3">
+                <small>
+                    <i class="bi bi-shield-check me-1"></i>
+                    Secure login portal
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize login page theme toggle button
+function initializeLoginThemeToggle() {
+    const toggle = document.getElementById('themeToggleLogin');
+    const icon = document.getElementById('themeIconLogin');
+
+    if (!toggle || !icon) return;
+
+    // Set initial icon state
+    const isDark = document.documentElement.classList.contains('dark-mode');
+    icon.className = isDark ? 'bi bi-sun' : 'bi bi-moon';
+
+    // Handle toggle click
+    toggle.addEventListener('click', function() {
+        const html = document.documentElement;
+        const isCurrent = html.classList.contains('dark-mode');
+
+        if (isCurrent) {
+            html.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+            icon.className = 'bi bi-moon';
+        } else {
+            html.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            icon.className = 'bi bi-sun';
+        }
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initializeLoginThemeToggle);
+</script>
+{% endblock %}
+

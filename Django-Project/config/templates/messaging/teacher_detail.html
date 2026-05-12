@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ teacher.user.get_full_name }} - Teacher Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 text-primary mb-1">
+                <i class="bi bi-person-circle"></i> {{ teacher.user.get_full_name }}
+            </h1>
+            <p class="text-muted">{{ teacher.designation }} | {{ teacher.get_department_display }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'messaging:teacher_edit' teacher.id %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            {% if teacher.salary_status == 'due' %}
+                <a href="{% url 'messaging:teacher_update_salary' teacher.id %}" class="btn btn-success">
+                    <i class="bi bi-currency-rupee"></i> Mark Paid
+                </a>
+            {% endif %}
+            <a href="{% url 'messaging:teacher_list' %}" class="btn btn-light">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                        <i class="bi bi-person-vcard"></i> Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="salary-tab" data-bs-toggle="tab" data-bs-target="#salary" type="button" role="tab">
+                        <i class="bi bi-currency-rupee"></i> Salary History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                        <i class="bi bi-chat-dots"></i> Messages Sent
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="tab-content card-body">
+            
+            <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Email</h6>
+                        <p>{{ teacher.user.email }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Employee ID</h6>
+                        <p>{{ teacher.employee_id }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Department</h6>
+                        <p><span class="badge bg-info">{{ teacher.get_department_display }}</span></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Designation</h6>
+                        <p>{{ teacher.designation }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Phone</h6>
+                        <p>{{ teacher.phone|default:"Not provided" }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Joined Date</h6>
+                        <p>{{ teacher.joined_date|date:"d M Y" }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Monthly Salary</h6>
+                        <p><strong>₹ {{ teacher.salary_amount }}</strong></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Salary Status</h6>
+                        <p>
+                            {% if teacher.salary_status == 'paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% else %}
+                                <span class="badge bg-warning">Due</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold text-muted">Last Paid Date</h6>
+                        <p>{{ teacher.last_paid_date|date:"d M Y"|default:"Never" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="tab-pane fade" id="salary" role="tabpanel">
+                {% if salary_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="table-light">
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Method</th>
+                                    <th>Reference</th>
+                                    <th>Processed By</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in salary_payments %}
+                                    <tr>
+                                        <td><strong>₹ {{ payment.amount }}</strong></td>
+                                        <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                                        <td><small>{{ payment.get_payment_method_display }}</small></td>
+                                        <td>{{ payment.reference_number|default:"-" }}</td>
+                                        <td>{{ payment.processed_by.username }}</td>
+                                        <td>{{ payment.notes|truncatewords:10|default:"-" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No salary payments recorded yet.
+                    </div>
+                {% endif %}
+            </div>
+
+            
+            <div class="tab-pane fade" id="messages" role="tabpanel">
+                {% if teacher_messages %}
+                    <div class="list-group list-group-flush">
+                        {% for message in teacher_messages %}
+                            <a href="{% url 'messaging:message_detail' message.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">
+                                        {% if message.message_type == 'broadcast' %}
+                                            <span class="badge bg-info me-2">Broadcast</span>
+                                        {% else %}
+                                            <span class="badge bg-primary me-2">Message to {{ message.receiver.username }}</span>
+                                        {% endif %}
+                                    </h6>
+                                    <small>{{ message.timestamp|date:"d M Y H:i" }}</small>
+                                </div>
+                                <p class="mb-1">{{ message.content|truncatewords:20 }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No messages sent by this teacher.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

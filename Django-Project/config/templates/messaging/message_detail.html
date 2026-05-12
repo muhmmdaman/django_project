@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Message - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-chat-left-text me-2"></i>Message Thread</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Inbox
+        </a>
+    </div>
+</div>
+
+
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ message.sender.get_full_name }}</strong>
+                <small class="d-block text-muted">{{ message.timestamp|date:"M d, Y H:i" }}</small>
+            </div>
+            <div style="text-align: right;">
+                
+                {% if message.message_type == 'private' and message.receiver == request.user %}
+                    
+                    <div class="message-status {% if message.read_at %}seen{% else %}unread{% endif %}"
+                         title="{% if message.read_at %}You have read this{% else %}Unread{% endif %}">
+                        {% if message.read_at %}✓✓{% else %}●{% endif %}
+                    </div>
+                {% elif message.message_type == 'private' and message.sender == request.user %}
+                    
+                    <div class="message-status {% if message.read_at %}seen{% else %}delivered{% endif %}"
+                         title="{% if message.read_at %}Recipient has read this{% else %}Delivered{% endif %}">
+                        {% if message.read_at %}✓✓{% else %}✓{% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {{ message.content }}
+    </div>
+</div>
+
+
+{% if replies %}
+<div class="mb-4">
+    <h5 class="mb-3">Replies ({{ replies|length }})</h5>
+    {% for reply in replies %}
+    <div class="card mb-3 bg-light">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ reply.sender.get_full_name }}</strong>
+                    <small class="d-block text-muted">{{ reply.timestamp|date:"M d, Y H:i" }}</small>
+                </div>
+                
+                <div class="message-status {% if reply.sender == request.user %}{% if reply.read_at %}seen{% else %}delivered{% endif %}{% else %}{% if reply.read_at %}seen{% else %}unread{% endif %}{% endif %}"
+                     title="{% if reply.sender == request.user %}{% if reply.read_at %}Recipient has read this{% else %}Delivered{% endif %}{% else %}{% if reply.read_at %}You have read this{% else %}Unread{% endif %}{% endif %}">
+                    {% if reply.sender == request.user %}
+                        {% if reply.read_at %}✓✓{% else %}✓{% endif %}
+                    {% else %}
+                        {% if reply.read_at %}✓✓{% else %}●{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body">{{ reply.content }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+<div class="card">
+    <div class="card-header">
+        <strong>Reply</strong>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.content }}
+                {% if form.content.errors %}
+                <div class="invalid-feedback d-block">{{ form.content.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send me-1"></i>Send Reply
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity: {{ user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3">Activity: {{ user.get_full_name }}</h1>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'messaging:admin_users_list' %}" class="btn btn-secondary">Back to Users</a>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> {{ user.get_full_name }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Role:</strong> <span class="badge bg-primary">{{ user.get_role_display }}</span></p>
+                    <p><strong>Join Date:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    {% if user.student %}
+                    <p><strong>Department:</strong> {{ user.student.department }}</p>
+                    <p><strong>Semester:</strong> {{ user.student.semester }}</p>
+                    <p><strong>Enrollment:</strong> {{ user.student.enrollment_number|default:"N/A" }}</p>
+                    {% endif %}
+                    <p><strong>Last Activity:</strong>
+                        {% if user.last_activity %}
+                            {{ user.last_activity|date:"M d, Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Never</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    {% if active_restrictions %}
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Current Restrictions</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for restriction in active_restrictions %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ restriction.get_restriction_type_display }}</h6>
+                        <small>
+                            {% if restriction.expires_at %}
+                                Expires: {{ restriction.expires_at|date:"M d, Y H:i" }}
+                            {% else %}
+                                Permanent
+                            {% endif %}
+                        </small>
+                    </div>
+                    <p class="mb-1"><strong>Reason:</strong> {{ restriction.reason }}</p>
+                    <p class="mb-1"><strong>Applied by:</strong> {{ restriction.restricted_by.get_full_name }}</p>
+                    <p class="mb-0"><strong>Applied at:</strong> {{ restriction.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Sent</h6>
+                    <h2 class="mb-0">{{ message_stats.sent_count }}</h2>
+                    <small class="text-muted">messages</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Received</h6>
+                    <h2 class="mb-0">{{ message_stats.received_count }}</h2>
+                    <small class="text-muted">messages</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">This Month</h6>
+                    <h2 class="mb-0">{{ message_stats.month_count }}</h2>
+                    <small class="text-muted">messages</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Activity Log (Last 50)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-{% if 'banned' in activity.action_type %}danger{% elif 'muted' in activity.action_type %}warning{% elif 'sent' in activity.action_type %}success{% elif 'deleted' in activity.action_type %}secondary{% else %}info{% endif %}">
+                                {{ activity.get_action_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if activity.target_user %}
+                                Target: {{ activity.target_user.get_full_name }}
+                            {% elif activity.message %}
+                                Message: {{ activity.message.content|truncatewords:10 }}
+                            {% else %}
+                                {{ activity.metadata|default:"—" }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ activity.created_at|date:"M d, Y H:i" }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">
+                            No activities recorded
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

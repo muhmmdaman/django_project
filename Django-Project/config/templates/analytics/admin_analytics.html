@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admin Analytics{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-4">Admin Analytics</h1>
+        </div>
+    </div>
+
+    <!-- Department Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Department Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Total Students</th>
+                                    <th>Average CGPA</th>
+                                    <th>Average Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in dept_stats %}
+                                <tr>
+                                    <td><strong>{{ dept.department }}</strong></td>
+                                    <td>{{ dept.total }}</td>
+                                    <td>{{ dept.avg_cgpa|floatformat:2 }}</td>
+                                    <td>{{ dept.avg_attendance|floatformat:1 }}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted">No data available</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Distribution -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% for risk in risk_distribution %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ risk.risk_level|upper }}</span>
+                            <strong>{{ risk.count }}</strong>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {% if risk.count > 0 %}{{ risk.count|add:10 }}%{% else %}5%{% endif %}"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No risk data available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Performers (CGPA)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for student in top_performers %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-0">{{ student.user.get_full_name }}</h6>
+                                <span class="badge bg-success">{{ student.cgpa|floatformat:2 }}</span>
+                            </div>
+                            <small class="text-muted">{{ student.department }} - Semester {{ student.semester }}</small>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No data available</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Improved & Low Performers -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Most Improved Students</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for student, improvement in most_improved %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-0">{{ student.user.get_full_name }}</h6>
+                                <span class="badge bg-info">+{{ improvement|floatformat:2 }}</span>
+                            </div>
+                            <small class="text-muted">{{ student.department }}</small>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No data available</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">At-Risk Students (High/Critical)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for pred in low_performers %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ pred.student.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ pred.student.department }}</small>
+                                </div>
+                                <span class="badge bg-{% if pred.risk_level == 'critical' %}danger{% else %}warning{% endif %}">{{ pred.get_risk_level_display }}</span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No at-risk students</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

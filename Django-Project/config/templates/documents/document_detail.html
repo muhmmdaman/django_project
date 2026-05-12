@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ document.title }} - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-file-pdf me-2"></i>{{ document.title }}</h2>
+        <p class="text-muted">{{ document.subject.name }}</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'documents:download' document.pk %}" class="btn btn-success me-2">
+            <i class="bi bi-download me-1"></i>Download
+        </a>
+        <a href="{% url 'documents:documents_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ document.title }}</h5>
+            </div>
+            <div class="card-body">
+                <h6>Description</h6>
+                <p>{{ document.description }}</p>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Subject:</span>
+                                <strong>{{ document.subject.name }}</strong>
+                            </li>
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Type:</span>
+                                <span class="badge bg-primary">{{ document.get_document_type_display }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Code:</span>
+                                <strong>{{ document.subject.code }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Uploaded By:</span>
+                                <strong>{{ document.uploaded_by.get_full_name }}</strong>
+                            </li>
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Uploaded:</span>
+                                <strong>{{ document.uploaded_at|date:"M d, Y H:i" }}</strong>
+                            </li>
+                            <li class="d-flex justify-content-between mb-2">
+                                <span>Downloads:</span>
+                                <strong>{{ document.downloads }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'documents:download' document.pk %}" class="btn btn-success w-100">
+                    <i class="bi bi-download me-1"></i>Download Document
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                Document Info
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-file-pdf display-3 text-danger"></i>
+                    <p class="mt-2 text-muted">PDF Document</p>
+                </div>
+                <button data-bs-toggle="modal" data-bs-target="#downloadModal" class="btn btn-success w-100">
+                    <i class="bi bi-download me-1"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="downloadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Download Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to download <strong>{{ document.title }}</strong></p>
+                <p class="text-muted">The download will start in a few seconds.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'documents:download' document.pk %}" class="btn btn-success">
+                    <i class="bi bi-download me-1"></i>Download Now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3">Activity Log</h1>
+            <p class="text-muted">System-wide activity tracking and audit trail</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-success" onclick="exportToCSV()">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="action_type" class="form-label">Action Type</label>
+                    <select class="form-select" id="action_type" name="action_type">
+                        <option value="">All Actions</option>
+                        <option value="login" {% if request.GET.action_type == 'login' %}selected{% endif %}>Login</option>
+                        <option value="logout" {% if request.GET.action_type == 'logout' %}selected{% endif %}>Logout</option>
+                        <option value="message_sent" {% if request.GET.action_type == 'message_sent' %}selected{% endif %}>Message Sent</option>
+                        <option value="broadcast_sent" {% if request.GET.action_type == 'broadcast_sent' %}selected{% endif %}>Broadcast Sent</option>
+                        <option value="user_banned" {% if request.GET.action_type == 'user_banned' %}selected{% endif %}>User Banned</option>
+                        <option value="user_muted" {% if request.GET.action_type == 'user_muted' %}selected{% endif %}>User Muted</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="user" class="form-label">User</label>
+                    <input type="text" class="form-control" id="user" name="user"
+                           placeholder="User name or email..." value="{{ request.GET.user|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="target_user" class="form-label">Target User</label>
+                    <input type="text" class="form-control" id="target_user" name="target_user"
+                           placeholder="Target name or email..." value="{{ request.GET.target_user|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from"
+                           value="{{ request.GET.date_from|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">To</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to"
+                           value="{{ request.GET.date_to|default:'' }}">
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="table-responsive">
+        <table class="table table-hover" id="activityTable">
+            <thead class="table-light">
+                <tr>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Target User</th>
+                    <th>Details</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                <tr class="action-{{ activity.action_type }}">
+                    <td>
+                        <strong>{{ activity.user.get_full_name }}</strong>
+                        <br><small class="text-muted">{{ activity.user.email }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if 'banned' in activity.action_type %}danger{% elif 'muted' in activity.action_type %}warning{% elif 'sent' in activity.action_type %}success{% elif 'deleted' in activity.action_type %}secondary{% elif 'login' in activity.action_type %}info{% else %}primary{% endif %}">
+                            {{ activity.get_action_type_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if activity.target_user %}
+                            <a href="{% url 'messaging:user_activity_detail' activity.target_user.id %}">
+                                {{ activity.target_user.get_full_name }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if activity.message %}
+                            <small><strong>Message:</strong> {{ activity.message.content|truncatewords:15 }}</small>
+                        {% elif activity.metadata %}
+                            <small>{{ activity.metadata }}</small>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small>{{ activity.created_at|date:"M d, Y H:i" }}</small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No activities found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+function exportToCSV() {
+    const table = document.getElementById('activityTable');
+    const rows = [];
+
+    // Get headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+    rows.push(headers.join(','));
+
+    // Get data rows
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('td').forEach(td => {
+            cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        rows.push(cells.join(','));
+    });
+
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'activity_log.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+</script>
+{% endblock %}

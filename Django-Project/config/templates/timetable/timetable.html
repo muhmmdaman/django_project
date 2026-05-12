@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+{% load timetable_filters %}
+
+{% block title %}Timetable - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4 animate-fade-in">
+    <div class="col">
+        <h2><i class="bi bi-calendar-event me-2"></i>Timetable</h2>
+        <p class="text-muted">
+            {% if user_type == 'student' %}
+            Class schedule for {{ current_dept }} - Semester {{ current_semester }}
+            {% else %}
+            Manage class schedules by department and semester
+            {% endif %}
+        </p>
+    </div>
+    {% if can_manage %}
+    <div class="col-auto">
+        <a href="{% url 'timetable:add_timeslot' %}{% if current_dept %}?department={{ current_dept }}{% endif %}{% if current_semester %}&semester={{ current_semester }}{% endif %}"
+           class="btn btn-primary btn-pulse">
+            <i class="bi bi-plus-circle me-2"></i>Add Time Slot
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+
+{% if user_type == 'teacher' %}
+<div class="row mb-4 animate-fade-in" style="animation-delay: 0.05s;">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-body py-3">
+                <form method="get" class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label mb-0 fw-bold"><i class="bi bi-funnel-fill me-2"></i>Filter:</label>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label mb-0 text-muted small">Department</label>
+                        <select name="department" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">All Departments</option>
+                            {% for code, name in dept_choices %}
+                            <option value="{{ code }}" {% if current_dept == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label mb-0 text-muted small">Semester</label>
+                        <select name="semester" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">All Semesters</option>
+                            {% for sem in semester_choices %}
+                            <option value="{{ sem }}" {% if current_semester == sem|stringformat:"s" %}selected{% endif %}>Semester {{ sem }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-primary mt-4">
+                            <i class="bi bi-search me-1"></i>Apply
+                        </button>
+                        {% if current_dept or current_semester %}
+                        <a href="{% url 'timetable:timetable' %}" class="btn btn-sm btn-outline-secondary mt-4">
+                            <i class="bi bi-x-circle me-1"></i>Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto ms-auto mt-4">
+                        {% if current_dept or current_semester %}
+                        <span class="badge bg-info me-1">
+                            {% if current_dept %}<i class="bi bi-building me-1"></i>{{ current_dept }}{% endif %}
+                        </span>
+                        <span class="badge bg-success">
+                            {% if current_semester %}<i class="bi bi-mortarboard me-1"></i>Sem {{ current_semester }}{% endif %}
+                        </span>
+                        <span class="badge bg-primary ms-2">
+                            <i class="bi bi-calendar-check me-1"></i>{{ timeslots|length }} slots
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">Showing: All Timetables</span>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if timeslots %}
+
+<div class="card timetable-card animate-fade-in mb-4 d-none d-md-block" style="animation-delay: 0.1s;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered timetable-grid mb-0">
+                <thead>
+                    <tr class="table-header">
+                        <th class="day-header-col">Day</th>
+                        {% for time_slot in time_slots_list %}
+                        <th class="time-header">
+                            <div class="time-display">
+                                <span class="start-time">{{ time_slot.0|time:"H:i" }}</span>
+                                <span class="time-separator">-</span>
+                                <span class="end-time">{{ time_slot.1|time:"H:i" }}</span>
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in days %}
+                    <tr class="timetable-row">
+                        <td class="day-cell">
+                            <div class="day-display">
+                                <span class="day-name">{{ day|title }}</span>
+                            </div>
+                        </td>
+                        {% for time_slot in time_slots_list %}
+                        {% with slot=grid_data|get_item:day|get_item:time_slot %}
+                        <td class="slot-cell {% if slot %}has-class{% endif %}">
+                            {% if slot %}
+                            <div class="class-card {% if slot.subject.is_lab %}lab-class{% endif %}">
+                                <div class="subject-code">
+                                    {{ slot.subject.code }}
+                                </div>
+                                <div class="subject-name">
+                                    {% if slot.subject.is_lab %}<i class="bi bi-pc-display me-1"></i>{% endif %}
+                                    {{ slot.subject.name }}
+                                </div>
+                                {% if user_type == 'student' %}
+                                <div class="faculty-name">
+                                    <i class="bi bi-person-fill"></i>
+                                    {{ slot.faculty.get_full_name|default:"TBA" }}
+                                </div>
+                                {% else %}
+                                <div class="dept-info">
+                                    <span class="badge bg-secondary">{{ slot.department }}</span>
+                                    <span class="badge bg-info">Sem {{ slot.semester }}</span>
+                                </div>
+                                {% endif %}
+                                {% if slot.room_number %}
+                                <div class="room-info">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                    {{ slot.room_number }}
+                                </div>
+                                {% endif %}
+                                {% if can_manage %}
+                                <div class="slot-actions mt-2">
+                                    <a href="{% url 'timetable:edit_timeslot' slot.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'timetable:delete_timeslot' slot.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="d-md-none">
+    <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Daily Schedule</h5>
+    {% for day in days %}
+    {% with slots=timetable_by_day|get_item:day %}
+    {% if slots %}
+    <div class="card mb-3 animate-fade-in day-card" style="animation-delay: {{ forloop.counter0 }}00ms;">
+        <div class="card-header day-header-mobile">
+            <i class="bi bi-calendar-day me-2"></i>{{ day|title }}
+            <span class="badge bg-light text-dark ms-2">{{ slots|length }} class{{ slots|length|pluralize:"es" }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                {% for slot in slots %}
+                <div class="list-group-item mobile-slot">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="text-secondary d-block mb-1" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">
+                                {{ slot.subject.code }}
+                            </small>
+                            <strong class="d-block">
+                                {% if slot.subject.is_lab %}<i class="bi bi-pc-display me-1 text-info"></i>{% endif %}
+                                {{ slot.subject.name }}
+                            </strong>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            {% if user_type == 'student' %}
+                            <small class="d-block">{{ slot.faculty.get_full_name|default:"TBA" }}</small>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ slot.department }}</span>
+                            {% endif %}
+                            {% if slot.room_number %}
+                            <small class="text-muted d-block">
+                                <i class="bi bi-geo-alt"></i> {{ slot.room_number }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if can_manage %}
+                    <div class="mt-2">
+                        <a href="{% url 'timetable:edit_timeslot' slot.pk %}" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'timetable:delete_timeslot' slot.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endfor %}
+</div>
+
+
+<div class="row mt-3 g-3">
+    <div class="col-auto">
+        <div class="card animate-fade-in" style="animation-delay: 0.3s;">
+            <div class="card-body py-2 px-3">
+                <small class="text-muted">
+                    <i class="bi bi-calendar-check me-2 text-success"></i>
+                    <strong>{{ timeslots|length }}</strong> class{{ timeslots|length|pluralize:"es" }} scheduled
+                    {% if current_semester %}
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-mortarboard me-1"></i>Semester {{ current_semester }}
+                    {% endif %}
+                    {% if current_dept %}
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-building me-1"></i>{{ current_dept }}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="card animate-fade-in" style="animation-delay: 0.35s;">
+            <div class="card-body py-2 px-3">
+                <small class="text-muted">
+                    <span class="me-3"><span class="d-inline-block rounded me-1" style="width: 12px; height: 12px; background: var(--accent);"></span> Theory</span>
+                    <span><span class="d-inline-block rounded me-1" style="width: 12px; height: 12px; background: var(--info);"></span> Lab/Practical</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info animate-fade-in d-flex align-items-center" style="animation-delay: 0.1s;">
+    <i class="bi bi-info-circle me-3 fs-4"></i>
+    <div>
+        <strong>No classes scheduled</strong>
+        <p class="mb-0 small">
+            {% if user_type == 'teacher' %}
+            Select a department and semester, or <a href="{% url 'timetable:add_timeslot' %}" class="alert-link">add a new time slot</a>.
+            {% else %}
+            Your timetable will appear here once classes are assigned.
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TIMETABLE GRID STYLES
+═══════════════════════════════════════════════════════════════ */
+
+.timetable-card {
+    overflow: hidden;
+    border: none;
+    box-shadow: var(--shadow-md);
+}
+
+.timetable-grid {
+    table-layout: fixed;
+    margin: 0;
+}
+
+.table-header th {
+    background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+    color: white;
+    text-align: center;
+    padding: 14px 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none !important;
+}
+
+.time-header {
+    width: 100px;
+    min-width: 100px;
+}
+
+.day-header-col {
+    width: 100px;
+    min-width: 100px;
+    background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+    color: white;
+    text-align: center;
+    padding: 14px 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none !important;
+}
+
+.day-header {
+    width: calc((100% - 100px) / 6);
+}
+
+.time-cell {
+    background-color: var(--bg-secondary);
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 500;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.2s ease;
+}
+
+.day-cell {
+    background-color: var(--bg-secondary);
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 500;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.2s ease;
+    width: 100px;
+    min-width: 100px;
+}
+
+.time-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+.day-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.day-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.start-time {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.end-time {
+    color: var(--text-secondary);
+}
+
+.time-separator {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    margin: 1px 0;
+}
+
+.slot-cell {
+    padding: 6px;
+    vertical-align: top;
+    min-height: 70px;
+    border-color: var(--border-color) !important;
+    transition: all 0.25s ease;
+    background-color: var(--bg-card);
+    width: calc((100% - 100px) / 7);
+    min-width: 100px;
+}
+
+.slot-cell.has-class {
+    background-color: rgba(99, 102, 241, 0.06);
+}
+
+.slot-cell:hover {
+    background-color: var(--bg-hover);
+}
+
+.slot-cell.has-class:hover {
+    background-color: rgba(99, 102, 241, 0.12);
+}
+
+.timetable-row {
+    transition: all 0.2s ease;
+}
+
+.timetable-row:hover .time-cell {
+    background-color: var(--bg-hover);
+}
+
+.timetable-row:hover .day-cell {
+    background-color: var(--bg-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLASS CARD STYLES
+═══════════════════════════════════════════════════════════════ */
+
+.class-card {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: default;
+}
+
+.class-card.lab-class {
+    border-left-color: var(--info);
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(14, 165, 233, 0.05) 100%);
+}
+
+.class-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
+.subject-name {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.subject-code {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.faculty-name {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.room-info {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dept-info {
+    margin: 4px 0;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.dept-info .badge {
+    font-size: 0.62rem;
+    padding: 3px 6px;
+}
+
+.slot-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.class-card:hover .slot-actions {
+    opacity: 1;
+}
+
+.slot-actions .btn {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE STYLES
+═══════════════════════════════════════════════════════════════ */
+
+.day-card {
+    border: none;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.day-header-mobile {
+    background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+}
+
+.mobile-slot {
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    border-color: var(--border-light) !important;
+}
+
+.mobile-slot:hover {
+    background-color: var(--bg-hover);
+}
+
+.mobile-slot:active {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════════════ */
+
+.animate-fade-in {
+    animation: timetableFadeIn 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes timetableFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Staggered row animations */
+.timetable-row {
+    opacity: 0;
+    animation: rowSlideIn 0.3s ease-out forwards;
+}
+
+.timetable-row:nth-child(1) { animation-delay: 0.1s; }
+.timetable-row:nth-child(2) { animation-delay: 0.15s; }
+.timetable-row:nth-child(3) { animation-delay: 0.2s; }
+.timetable-row:nth-child(4) { animation-delay: 0.25s; }
+.timetable-row:nth-child(5) { animation-delay: 0.3s; }
+.timetable-row:nth-child(6) { animation-delay: 0.35s; }
+.timetable-row:nth-child(7) { animation-delay: 0.4s; }
+.timetable-row:nth-child(8) { animation-delay: 0.45s; }
+
+@keyframes rowSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE SUPPORT
+═══════════════════════════════════════════════════════════════ */
+
+body.dark-mode .class-card {
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+body.dark-mode .class-card.lab-class {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(14, 165, 233, 0.1) 100%);
+}
+
+body.dark-mode .class-card:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .slot-cell.has-class {
+    background-color: rgba(99, 102, 241, 0.12);
+}
+
+body.dark-mode .slot-cell.has-class:hover {
+    background-color: rgba(99, 102, 241, 0.2);
+}
+
+body.dark-mode .table-header th {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+}
+
+body.dark-mode .day-header-mobile {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+}
+
+body.dark-mode .subject-name {
+    color: var(--text-main);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE ADJUSTMENTS
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 991.98px) {
+    .time-header {
+        width: 80px;
+        min-width: 80px;
+    }
+
+    .time-display {
+        font-size: 0.75rem;
+    }
+
+    .subject-name {
+        font-size: 0.75rem;
+    }
+
+    .class-card {
+        padding: 6px 8px;
+    }
+
+    .slot-actions {
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

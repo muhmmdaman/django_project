@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Subject Assignment Documents{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-file-earmark-text me-2"></i>My Subject Assignment Documents</h2>
+            <p class="text-muted">View status of your uploaded subject assignment documents</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'students:teacher_upload_document' %}" class="btn btn-primary">
+                <i class="bi bi-cloud-upload me-2"></i>Upload New Document
+            </a>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{% url 'students:teacher_documents_list' %}" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">
+                    All Documents
+                </a>
+                <a href="?status=pending" class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+                    Pending
+                </a>
+                <a href="?status=approved" class="btn btn-outline-success {% if status_filter == 'approved' %}active{% endif %}">
+                    Approved
+                </a>
+                <a href="?status=rejected" class="btn btn-outline-danger {% if status_filter == 'rejected' %}active{% endif %}">
+                    Rejected
+                </a>
+            </div>
+        </div>
+    </div>
+
+    
+    {% if documents %}
+    <div class="row g-4">
+        {% for document in documents %}
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ document.document_name }}</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>{{ document.uploaded_at|date:"M d, Y H:i" }}
+                            </small>
+                        </div>
+                        <span class="badge bg-{% if document.status == 'approved' %}success{% elif document.status == 'pending' %}warning{% else %}danger{% endif %}">
+                            {{ document.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Subjects Requested:</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for subject in document.subjects.all %}
+                            <span class="badge bg-secondary">{{ subject.code }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if document.approval_notes %}
+                    <div class="alert {% if document.status == 'approved' %}alert-success{% elif document.status == 'pending' %}alert-info{% else %}alert-danger{% endif %} mb-0" role="alert">
+                        <strong>Admin Note:</strong><br>
+                        {{ document.approval_notes }}
+                    </div>
+                    {% elif document.status == 'pending' %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-hourglass-split me-2"></i>Awaiting admin review and approval...
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if document.approved_by %}
+                <div class="card-footer bg-light text-muted small">
+                    <i class="bi bi-check-circle me-1"></i>
+                    {% if document.status == 'approved' %}
+                    Approved by {{ document.approved_by.get_full_name }} on {{ document.uploaded_at|date:"M d, Y" }}
+                    {% else %}
+                    Reviewed by {{ document.approved_by.get_full_name }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No documents found. <a href="{% url 'students:teacher_upload_document' %}" class="alert-link">Upload your first document</a>.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

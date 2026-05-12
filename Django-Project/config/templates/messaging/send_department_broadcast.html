@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Department Broadcast{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="h3 mb-4">Send Department Broadcast</h1>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="broadcastForm">
+                        {% csrf_token %}
+
+                        
+                        <div class="mb-4">
+                            <label for="department" class="form-label">Select Department</label>
+                            <select class="form-select form-select-lg" id="department" name="department" required
+                                    onchange="updateRecipientCount()">
+                                <option value="">-- Choose a department --</option>
+                                <option value="CSE" data-count="4">CSE (4 students)</option>
+                                <option value="IT" data-count="4">IT (4 students)</option>
+                                <option value="ECE" data-count="4">ECE (4 students)</option>
+                                <option value="GEN" data-count="4">GEN (4 students)</option>
+                            </select>
+                            <small class="form-text text-muted">Broadcast will be sent to all students in selected department</small>
+                        </div>
+
+                        
+                        <div class="mb-4">
+                            <label for="recipientCountField" class="form-label">Recipients Count</label>
+                            <input type="text" class="form-control" id="recipientCountField"
+                                   value="0" readonly>
+                            <small class="form-text text-muted" id="recipientDetails"></small>
+                        </div>
+
+                        
+                        <div class="alert alert-warning mb-4 d-none" id="warningBox" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Important:</strong> You are about to send this message to
+                            <strong id="warningCount">0</strong> users in <strong id="warningDept">—</strong>.
+                            This action cannot be undone.
+                        </div>
+
+                        
+                        <div class="mb-4">
+                            <label for="content" class="form-label">Message Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="6"
+                                      placeholder="Type your message..." required></textarea>
+                            <small class="form-text text-muted">Maximum 5000 characters</small>
+                        </div>
+
+                        
+                        <div class="card bg-light mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Preview</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview" class="text-muted">
+                                    <small>Message preview will appear here...</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'messaging:inbox' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="button" class="btn btn-warning" id="sendBtn" data-bs-toggle="modal"
+                                    data-bs-target="#confirmModal" disabled>
+                                <i class="bi bi-send"></i> Send Broadcast
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Department Broadcast</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to send this broadcast message to <strong id="confirmCount">0</strong> users in
+                   <strong id="confirmDept">—</strong>.</p>
+                <p class="text-danger"><strong>⚠️ Warning:</strong> This action cannot be undone. All users in this department will receive this message.</p>
+                <p>Are you absolutely sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitBroadcast()">
+                    Yes, Send Broadcast
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</div>
+
+<script>
+function updateRecipientCount() {
+    const departmentSelect = document.getElementById('department');
+    const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+    const count = selectedOption.dataset.count || 0;
+    const dept = departmentSelect.value;
+
+    document.getElementById('recipientCountField').value = count;
+    document.getElementById('recipientDetails').textContent = `${count} students in ${dept}`;
+    document.getElementById('warningCount').textContent = count;
+    document.getElementById('warningDept').textContent = dept;
+    document.getElementById('confirmCount').textContent = count;
+    document.getElementById('confirmDept').textContent = dept;
+
+    // Show/hide warning box
+    const warningBox = document.getElementById('warningBox');
+    if (count > 0) {
+        warningBox.classList.remove('d-none');
+        document.getElementById('sendBtn').disabled = false;
+    } else {
+        warningBox.classList.add('d-none');
+        document.getElementById('sendBtn').disabled = true;
+    }
+}
+
+// Update preview as user types
+document.getElementById('content').addEventListener('input', function() {
+    const preview = document.getElementById('preview');
+    if (this.value.trim()) {
+        preview.innerHTML = this.value.replace(/\n/g, '<br>');
+        preview.classList.remove('text-muted');
+    } else {
+        preview.innerHTML = '<small class="text-muted">Message preview will appear here...</small>';
+        preview.classList.add('text-muted');
+    }
+});
+
+function submitBroadcast() {
+    document.getElementById('broadcastForm').submit();
+}
+</script>
+{% endblock %}

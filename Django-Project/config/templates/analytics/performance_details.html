@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Performance Details{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-4">Detailed Performance Analysis</h1>
+        </div>
+    </div>
+
+    {% if prediction %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ student.user.get_full_name }} - {{ student.department }}</h5>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Predicted Score:</strong> {{ prediction.predicted_score|floatformat:1 }}/100</p>
+                            <p><strong>Predicted CGPA:</strong> {{ prediction.predicted_cgpa|floatformat:2 }}/10</p>
+                            <p><strong>Current CGPA:</strong> {{ student.cgpa|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Risk Level:</strong> <span class="badge bg-{{ prediction.get_risk_color }}">{{ prediction.get_risk_level_display }}</span></p>
+                            <p><strong>Attendance:</strong> {{ student.attendance|floatformat:1 }}%</p>
+                            <p><strong>Performance Trend:</strong> <span class="badge bg-{{ prediction.get_trend_color }}">{{ prediction.get_performance_trend_display }}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No detailed performance data available.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
