@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard - Academic Intelligence System{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="alert alert-warning d-flex align-items-center">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+</div>
+{% else %}
+
+
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="mb-1"><i class="bi bi-grid-1x2-fill me-2"></i>My Dashboard</h2>
+        <p class="text-muted mb-0">Welcome back, {{ student.user.get_full_name|default:student.user.username }}!</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'students:download_report' student.pk %}" class="btn btn-success">
+            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download Report
+        </a>
+    </div>
+</div>
+
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-body py-3">
+                <form method="get" class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label mb-0 fw-bold"><i class="bi bi-funnel-fill me-2"></i>Filter by Semester:</label>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group" role="group">
+                            <a href="?semester=all" class="btn btn-sm {% if selected_semester == 'all' or not selected_semester %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                All Semesters
+                            </a>
+                            {% for sem in available_semesters %}
+                            <a href="?semester={{ sem }}" class="btn btn-sm {% if selected_semester == sem %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                Sem {{ sem }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-auto ms-auto">
+                        <span class="badge bg-info">
+                            {% if selected_semester and selected_semester != 'all' %}
+                            Showing: Semester {{ selected_semester }}
+                            {% else %}
+                            Showing: All Semesters
+                            {% endif %}
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row mb-4 g-3">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card primary h-100 animate-fade-in hover-lift">
+            <div class="card-body">
+                <h6 class="text-muted mb-2"><i class="bi bi-person-badge-fill me-1"></i>Student Info</h6>
+                <h4 class="mb-1">{{ student.user.get_full_name }}</h4>
+                <span class="badge bg-primary me-1">{{ student.department }}</span>
+                <span class="badge bg-secondary">Sem {{ student.semester }}</span>
+                <small class="d-block text-muted mt-1">{{ student.enrollment_number }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card {% if cgpa >= 8 %}success{% elif cgpa >= 6 %}warning{% else %}danger{% endif %} h-100 animate-fade-in hover-lift" style="animation-delay: 0.05s;">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-award-fill me-1"></i>{{ gpa_label|default:"CGPA" }}
+                    {% if selected_semester and selected_semester != 'all' %}
+                    <span class="badge bg-info ms-1" style="font-size: 0.65rem;">Sem {{ selected_semester }}</span>
+                    {% endif %}
+                </h6>
+                <h2 class="mb-1">{{ cgpa|floatformat:2 }}</h2>
+                <span class="badge {% if class_color == 'success' %}bg-success{% elif class_color == 'primary' %}bg-primary{% elif class_color == 'warning' %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ grade }} - {{ grade_desc }}
+                </span>
+                <small class="d-block mt-1">{{ classification }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card {% if attendance >= 75 %}success{% else %}danger{% endif %} h-100 animate-fade-in hover-lift" style="animation-delay: 0.1s;">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-calendar-check-fill me-1"></i>Attendance
+                    {% if selected_semester and selected_semester != 'all' %}
+                    <span class="badge bg-info ms-1" style="font-size: 0.65rem;">Sem {{ selected_semester }}</span>
+                    {% endif %}
+                </h6>
+                <h2 class="mb-1">{{ attendance|floatformat:1 }}%</h2>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar {% if attendance >= 75 %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ attendance }}%"></div>
+                </div>
+                {% if attendance < 75 %}
+                <small class="text-danger mt-2 d-block"><i class="bi bi-exclamation-circle me-1"></i>Below 75% threshold</small>
+                {% else %}
+                <small class="text-success mt-2 d-block"><i class="bi bi-check-circle me-1"></i>Good standing</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card {% if prediction.risk_level == 'low' %}success{% elif prediction.risk_level == 'medium' %}warning{% else %}danger{% endif %} h-100 animate-fade-in hover-lift" style="animation-delay: 0.15s;">
+            <div class="card-body">
+                <h6 class="text-muted mb-2"><i class="bi bi-robot me-1"></i>AI Prediction</h6>
+                {% if prediction %}
+                <h2 class="mb-1">{{ prediction.predicted_cgpa|floatformat:2 }}</h2>
+                <span class="badge badge-risk-{{ prediction.risk_level }}">
+                    <i class="bi bi-{{ prediction.get_risk_icon }} me-1"></i>{{ prediction.get_risk_level_display }}
+                </span>
+                <small class="d-block mt-1 text-muted">
+                    {% if prediction.performance_trend == 'improving' %}
+                    <i class="bi bi-arrow-up-circle text-success me-1"></i>Improving
+                    {% elif prediction.performance_trend == 'declining' %}
+                    <i class="bi bi-arrow-down-circle text-danger me-1"></i>Declining
+                    {% else %}
+                    <i class="bi bi-dash-circle text-secondary me-1"></i>Stable
+                    {% endif %}
+                </small>
+                {% else %}
+                <h4 class="text-muted mb-0">N/A</h4>
+                <small class="text-muted">Not available yet</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% if alerts %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% for alert in alerts %}
+        <div class="alert alert-{{ alert.type }} d-flex align-items-center mb-2">
+            <i class="bi bi-{% if alert.type == 'danger' %}exclamation-triangle-fill{% elif alert.type == 'warning' %}exclamation-circle-fill{% else %}info-circle-fill{% endif %} me-2"></i>
+            <span>{{ alert.message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+
+<div class="row mb-4 g-3">
+    <div class="col-lg-8">
+        <div class="card h-100 animate-fade-in" style="animation-delay: 0.2s;">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-bar-chart-fill me-2 text-primary"></i>
+                <span>Subject-wise Performance</span>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;" class="chart-loading">
+                    <canvas id="marksChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100 animate-fade-in" style="animation-delay: 0.25s;">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-graph-up me-2 text-success"></i>
+                <span>CGPA Trend</span>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;" class="chart-loading">
+                    <canvas id="cgpaTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-journal-text me-2"></i>Subject-wise Marks</span>
+                <span class="badge bg-primary">{{ marks|length }} Subjects</span>
+            </div>
+            <div class="card-body p-0">
+                {% if marks %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                {% if selected_semester and selected_semester != 'all' %}
+                                <th class="text-center">Type</th>
+                                {% endif %}
+                                <th class="text-center">Score</th>
+                                <th class="text-center">Grade</th>
+                                <th class="text-center">Credits</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mark in marks %}
+                            <tr>
+                                <td>
+                                    <strong>{{ mark.subject.name }}</strong>
+                                    <small class="d-block text-muted">{{ mark.subject.code }}</small>
+                                </td>
+                                {% if selected_semester and selected_semester != 'all' %}
+                                <td class="text-center">
+                                    {% if mark.subject.is_lab %}
+                                    <span class="badge bg-info">Lab</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Theory</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td class="text-center">
+                                    <span class="fs-5 fw-bold {% if mark.score >= 70 %}text-success{% elif mark.score >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ mark.score|floatformat:1 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge {% if mark.score >= 90 %}bg-success{% elif mark.score >= 80 %}bg-success{% elif mark.score >= 70 %}bg-primary{% elif mark.score >= 60 %}bg-info{% elif mark.score >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ mark.get_grade }}
+                                    </span>
+                                    <small class="d-block text-muted">GP: {{ mark.get_grade_point|floatformat:1 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ mark.subject.credits }}</span>
+                                </td>
+                                <td style="width: 180px;">
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar {% if mark.score >= 70 %}bg-success{% elif mark.score >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                             style="width: {{ mark.score }}%">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td><strong>Overall</strong></td>
+                                {% if selected_semester and selected_semester != 'all' %}
+                                <td></td>
+                                {% endif %}
+                                <td class="text-center">
+                                    <span class="fs-5 fw-bold">{{ semester_average|floatformat:1 }}%</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-dark">{{ grade }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-bold">{{ gpa_label|default:"CGPA" }}: {{ cgpa|floatformat:2 }}</span>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-x display-4 d-block mb-3 text-muted"></i>
+                    <p class="text-muted mb-0">No marks recorded yet.</p>
+                    <small class="text-muted">Your marks will appear here once they are added.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-lg-4">
+        
+        <div class="card mb-3">
+            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important; color: white;">
+                <i class="bi bi-lightbulb-fill me-2"></i>AI Recommendations
+            </div>
+            <div class="card-body">
+                {% if prediction and prediction.suggestions %}
+                <ul class="list-unstyled mb-0">
+                    {% for suggestion in prediction.suggestions.splitlines %}
+                    {% if suggestion %}
+                    <li class="mb-3 d-flex">
+                        {% if 'CRITICAL' in suggestion or 'URGENT' in suggestion or 'ACTION' in suggestion %}
+                        <span class="badge bg-danger me-2 mt-1" style="height: fit-content;">!</span>
+                        {% elif 'ATTENTION' in suggestion %}
+                        <span class="badge bg-warning me-2 mt-1" style="height: fit-content;">!</span>
+                        {% elif 'Excellent' in suggestion or 'Outstanding' in suggestion or 'Great' in suggestion %}
+                        <span class="badge bg-success me-2 mt-1" style="height: fit-content;"><i class="bi bi-star-fill"></i></span>
+                        {% else %}
+                        <span class="badge bg-info me-2 mt-1" style="height: fit-content;"><i class="bi bi-info"></i></span>
+                        {% endif %}
+                        <span class="small">{{ suggestion }}</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-robot display-4 d-block mb-3 text-muted"></i>
+                    <p class="text-muted mb-0">AI suggestions will appear once marks are added.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        
+        {% if weak_subjects %}
+        <div class="card mb-3 border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Subjects Needing Attention
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for subject, score in weak_subjects %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ subject.name }}</strong>
+                            <small class="d-block text-muted">{{ subject.code }}</small>
+                        </div>
+                        <span class="badge bg-danger fs-6">{{ score|floatformat:1 }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        
+        {% if strong_subjects %}
+        <div class="card mb-3 border-success">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-trophy-fill me-2"></i>Top Performing Subjects
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for mark in strong_subjects %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ mark.subject.name }}</strong>
+                            <small class="d-block text-muted">{{ mark.subject.code }}</small>
+                        </div>
+                        <span class="badge bg-success fs-6">{{ mark.score|floatformat:1 }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        
+        {% if marks %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up me-2"></i>Performance Stats
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <small class="text-muted d-block">Highest</small>
+                            <span class="fs-4 fw-bold text-success">{{ highest_score|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <small class="text-muted d-block">Lowest</small>
+                            <span class="fs-4 fw-bold text-danger">{{ lowest_score|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <small class="text-muted d-block">Passed</small>
+                            <span class="fs-4 fw-bold text-success">{{ passed_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <small class="text-muted d-block">Failed</small>
+                            <span class="fs-4 fw-bold text-danger">{{ failed_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if marks %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Subject-wise Marks Bar Chart
+    const marksCtx = document.getElementById('marksChart').getContext('2d');
+    new Chart(marksCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for mark in marks %}'{{ mark.subject.code }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Score',
+                data: [{% for mark in marks %}{{ mark.score }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [
+                    {% for mark in marks %}
+                    {% if mark.score >= 70 %}'rgba(16, 185, 129, 0.85)'
+                    {% elif mark.score >= 50 %}'rgba(245, 158, 11, 0.85)'
+                    {% else %}'rgba(239, 68, 68, 0.85)'
+                    {% endif %}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ],
+                borderColor: [
+                    {% for mark in marks %}
+                    {% if mark.score >= 70 %}'rgb(16, 185, 129)'
+                    {% elif mark.score >= 50 %}'rgb(245, 158, 11)'
+                    {% else %}'rgb(239, 68, 68)'
+                    {% endif %}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ],
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // CGPA Trend Line Chart
+    const trendCtx = document.getElementById('cgpaTrendChart').getContext('2d');
+    {% if history %}
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for h in history %}'Sem {{ h.semester }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'SGPA',
+                data: [{% for h in history %}{{ h.sgpa }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: false
+            }, {
+                label: 'CGPA',
+                data: [{% for h in history %}{{ h.cgpa }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 0,
+                    max: 10,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    {% else %}
+    // No history data - show placeholder
+    trendCtx.font = '14px Arial';
+    trendCtx.fillStyle = '#9ca3af';
+    trendCtx.textAlign = 'center';
+    trendCtx.fillText('Historical data will appear', trendCtx.canvas.width / 2, trendCtx.canvas.height / 2 - 10);
+    trendCtx.fillText('as semesters progress', trendCtx.canvas.width / 2, trendCtx.canvas.height / 2 + 10);
+    {% endif %}
+});
+</script>
+{% endif %}
+{% endblock %}

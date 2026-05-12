@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3">User Management</h1>
+            <p class="text-muted">Manage user restrictions and permissions</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-info">Total Users: {{ total_users }}</span>
+            <span class="badge bg-danger">Restricted: {{ restricted_count }}</span>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search"
+                           placeholder="Name or email..." value="{{ request.GET.search|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role">
+                        <option value="">All Roles</option>
+                        <option value="student" {% if request.GET.role == 'student' %}selected{% endif %}>Student</option>
+                        <option value="teacher" {% if request.GET.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                        <option value="admin" {% if request.GET.role == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="">All Departments</option>
+                        <option value="CSE" {% if request.GET.department == 'CSE' %}selected{% endif %}>CSE</option>
+                        <option value="IT" {% if request.GET.department == 'IT' %}selected{% endif %}>IT</option>
+                        <option value="ECE" {% if request.GET.department == 'ECE' %}selected{% endif %}>ECE</option>
+                        <option value="GEN" {% if request.GET.department == 'GEN' %}selected{% endif %}>GEN</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" class="form-check-input" id="has_restrictions" name="has_restrictions"
+                               {% if request.GET.has_restrictions %}checked{% endif %}>
+                        <label class="form-check-label" for="has_restrictions">Has Restrictions</label>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{% url 'messaging:admin_users_list' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Restrictions</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.get_full_name }}</strong>
+                        <br><small class="text-muted">@{{ user.username }}</small>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge bg-{% if user.role == 'student' %}primary{% elif user.role == 'teacher' %}success{% else %}secondary{% endif %}">
+                            {{ user.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.student %}
+                            <span class="badge bg-light text-dark">{{ user.student.department }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% with restrictions=user.restrictions.all %}
+                            {% if restrictions %}
+                                {% for restriction in restrictions %}
+                                    {% if restriction.is_active %}
+                                        <span class="badge bg-{% if restriction.restriction_type == 'banned' %}danger{% elif restriction.restriction_type == 'muted' %}warning{% else %}secondary{% endif %}"
+                                              title="Expires: {{ restriction.expires_at|date:'M d, Y' }}">
+                                            {{ restriction.get_restriction_type_display }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span class="badge bg-success">None</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if user.last_activity %}
+                            <small>{{ user.last_activity|date:"M d, Y H:i" }}</small>
+                        {% else %}
+                            <small class="text-muted">Never</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm flex-wrap">
+                            <a href="{% url 'messaging:user_activity_detail' user.id %}" class="btn btn-info" title="View Activity">
+                                <i class="bi bi-activity"></i>
+                            </a>
+                            {% with active_ban=user.restrictions.all|dictsort:"is_active"|last %}
+                                {% if active_ban and active_ban.restriction_type == 'banned' and active_ban.is_active %}
+                                    <button type="button" class="btn btn-success" onclick="performAction({{ user.id }}, 'unban')" title="Unban User">
+                                        <i class="bi bi-check-circle"></i> Unban
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-danger" onclick="performAction({{ user.id }}, 'ban')" title="Ban">
+                                        <i class="bi bi-ban"></i> Ban
+                                    </button>
+                                {% endif %}
+                            {% endwith %}
+
+                            {% with active_mute=user.restrictions.all|dictsort:"is_active"|last %}
+                                {% if active_mute and active_mute.restriction_type == 'muted' and active_mute.is_active %}
+                                    <button type="button" class="btn btn-success" onclick="performAction({{ user.id }}, 'unmute')" title="Unmute User">
+                                        <i class="bi bi-check-circle"></i> Unmute
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-warning" onclick="performAction({{ user.id }}, 'mute')" title="Mute">
+                                        <i class="bi bi-volume-mute"></i> Mute
+                                    </button>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        No users found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin Users List initialized');
+});
+
+function performAction(userId, action) {
+    console.log('Performing action:', action, 'for user:', userId);
+
+    if (!confirm(`Are you sure you want to ${action} this user?`)) {
+        return;
+    }
+
+    const csrftoken = getCsrfToken();
+    const url = `/messages/admin/users/${userId}/${action}/`;
+
+    console.log('Fetching:', url);
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken || '',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            reason: `${action.charAt(0).toUpperCase() + action.slice(1)} by admin`,
+            expiration_days: ''
+        })
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json().then(data => ({ ok: response.ok, status: response.status, data }));
+    })
+    .then(({ ok, status, data }) => {
+        console.log('Response data:', data);
+        if (ok || status === 200) {
+            console.log('Action successful, reloading page');
+            location.reload();
+        } else {
+            const errorMsg = 'Error: ' + (data.error || `Server responded with status ${status}`);
+            console.error(errorMsg);
+            alert(errorMsg);
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        alert('Error: ' + error.message);
+    });
+}
+
+function getCsrfToken() {
+    const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value
+                     || document.querySelector('[name=csrfmiddlewaretoken]')?.value
+                     || getCsrfTokenFromCookie();
+    return csrftoken || '';
+}
+
+function getCsrfTokenFromCookie() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken' || name === 'csrf_token') {
+            return value;
+        }
+    }
+    return '';
+}
+</script>
+{% endblock %}

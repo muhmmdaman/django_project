@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Document Approval Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-file-earmark-check me-2"></i>Document Approval Management</h2>
+            <p class="text-muted">Review and approve teacher subject assignment documents</p>
+        </div>
+        <div class="col-auto">
+            <span class="badge bg-warning" title="Pending documents">
+                <i class="bi bi-hourglass-split me-1"></i>{{ pending_count }} Pending
+            </span>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{% url 'students:admin_document_approval' %}" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">
+                    All Documents
+                </a>
+                <a href="?status=pending" class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+                    <i class="bi bi-hourglass-split me-1"></i>Pending
+                </a>
+                <a href="?status=approved" class="btn btn-outline-success {% if status_filter == 'approved' %}active{% endif %}">
+                    <i class="bi bi-check-circle me-1"></i>Approved
+                </a>
+                <a href="?status=rejected" class="btn btn-outline-danger {% if status_filter == 'rejected' %}active{% endif %}">
+                    <i class="bi bi-x-circle me-1"></i>Rejected
+                </a>
+            </div>
+        </div>
+    </div>
+
+    
+    {% if documents %}
+    <div class="row g-3">
+        {% for document in documents %}
+        <div class="col-lg-6">
+            <div class="card h-100 border-{% if document.status == 'pending' %}warning{% elif document.status == 'approved' %}success{% else %}danger{% endif %}">
+                <div class="card-header bg-{% if document.status == 'pending' %}warning{% elif document.status == 'approved' %}success{% else %}danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ document.teacher.user.get_full_name }}</h6>
+                            <small>{{ document.teacher.department }} | {{ document.teacher.designation }}</small>
+                        </div>
+                        <span class="badge bg-dark">{{ document.get_status_display }}</span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Document:</h6>
+                        <p class="mb-1">
+                            <strong>{{ document.document_name }}</strong><br>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>{{ document.uploaded_at|date:"M d, Y H:i" }}
+                            </small>
+                        </p>
+                        {% if document.document %}
+                        <a href="{{ document.document.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-download me-1"></i>Download
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Subjects Requested ({{ document.subjects.count }}):</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for subject in document.subjects.all %}
+                            <span class="badge bg-secondary">
+                                {{ subject.code }}<br>
+                                <small>{{ subject.name|truncatewords:2 }}</small>
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if document.status == 'pending' %}
+                    <a href="{% url 'students:document_approve_reject' document.id %}" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-pencil me-1"></i>Review & Approve/Reject
+                    </a>
+                    {% else %}
+                    <div class="alert alert-{% if document.status == 'approved' %}success{% else %}danger{% endif %} mb-0 small">
+                        <strong>Admin Note:</strong><br>
+                        {{ document.approval_notes|default:"No notes provided" }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if document.approved_by %}
+                <div class="card-footer bg-light text-muted small">
+                    <i class="bi bi-person-check me-1"></i>
+                    Reviewed by {{ document.approved_by.get_full_name }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No documents with status "{{ status_filter|default:'all' }}" found.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

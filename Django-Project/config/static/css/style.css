@@ -1,0 +1,115 @@
+
+
+
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+
+.stat-card {
+    border-radius: 0.5rem;
+}
+
+.stat-card h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.stat-card h6 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+.badge-risk-low {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
+
+.badge-risk-medium {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge-risk-high {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+
+.progress {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 1rem;
+}
+
+
+.table > :not(caption) > * > * {
+    padding: 1rem 0.75rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+
+.card-header h4 {
+    color: #333;
+}
+
+
+.display-4 {
+    font-weight: 700;
+}
+
+
+@media (max-width: 768px) {
+    .stat-card h2 {
+        font-size: 1.75rem;
+    }
+
+    .navbar-brand {
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Salary Management - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'messages:admin_control_panel' %}">Admin Panel</a></li>
+                <li class="breadcrumb-item active">Teacher Salary Management</li>
+            </ol>
+        </nav>
+        <h2><i class="bi bi-currency-rupee me-2"></i>Teacher Salary Management</h2>
+        <p class="text-muted">Manage teacher salaries, payment status, and payment records.</p>
+    </div>
+</div>
+
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="department" class="form-label">Department</label>
+                <select name="department" id="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for code, name in department_choices %}
+                    <option value="{{ code }}" {% if selected_department == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="salary_status" class="form-label">Salary Status</label>
+                <select name="salary_status" id="salary_status" class="form-select">
+                    <option value="">All Status</option>
+                    {% for code, name in salary_status_choices %}
+                    <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <a href="{% url 'students:teacher_salary_list' %}" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-x-lg me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Salary Amount</th>
+                    <th>Status</th>
+                    <th>Last Paid Date</th>
+                    <th>Total Paid</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>
+                        <span class="badge bg-light text-dark">{{ teacher.employee_id }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ teacher.user.get_full_name }}</strong><br>
+                        <small class="text-muted">{{ teacher.designation }}</small>
+                    </td>
+                    <td>{{ teacher.get_department_display }}</td>
+                    <td>
+                        <span style="color: #059669; font-weight: bold;">₹ {{ teacher.salary_amount|floatformat:2 }}</span>
+                    </td>
+                    <td>
+                        {% if teacher.salary_status == "paid" %}
+                        <span class="badge bg-success">Paid</span>
+                        {% else %}
+                        <span class="badge bg-warning">Due</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if teacher.last_paid_date %}
+                        {{ teacher.last_paid_date|date:"d M Y" }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if teacher.salary_payments.exists %}
+                        <span style="color: #059669; font-weight: bold;">
+                            ₹ {% widthratio teacher.salary_payments.all|length 1 teacher.salary_amount|multiply:teacher.salary_payments|default:0|floatformat:2 %}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">No payments</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'students:teacher_salary_detail' teacher.id %}" class="btn btn-sm btn-outline-info" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'students:edit_teacher_salary' teacher.id %}" class="btn btn-sm btn-outline-primary" title="Edit Salary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'students:add_salary_payment' teacher.id %}" class="btn btn-sm btn-outline-success" title="Add Payment">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">No teachers found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

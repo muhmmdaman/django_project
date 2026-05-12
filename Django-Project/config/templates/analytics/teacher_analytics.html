@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Analytics - Department View{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-4">Department Analytics - {{ teacher.department }}</h1>
+        </div>
+    </div>
+
+    {% if dept_stats %}
+    <div class="row">
+        {% for dept in dept_stats %}
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ dept.get_department_display }}</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-1"><small class="text-muted">Total Students</small></p>
+                            <h4>{{ dept.total }}</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><small class="text-muted">Average CGPA</small></p>
+                            <h4>{{ dept.avg_cgpa|floatformat:2 }}</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><small class="text-muted">Average Attendance</small></p>
+                            <h4>{{ dept.avg_attendance|floatformat:1 }}%</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No analytics data available for your department yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

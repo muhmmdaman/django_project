@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Risk Analysis{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-4">Risk Analysis Dashboard</h1>
+        </div>
+    </div>
+
+    <!-- Risk Distribution Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Distribution Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for risk in risk_distribution %}
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-primary">{{ risk.count }}</h3>
+                                <p class="mb-0"><strong>{{ risk.risk_level|upper }}</strong></p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- At-Risk Students -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Students at Critical & High Risk</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Department</th>
+                                    <th>Risk Level</th>
+                                    <th>Predicted Score</th>
+                                    <th>Attendance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pred in low_performers %}
+                                <tr>
+                                    <td>{{ pred.student.user.get_full_name }}</td>
+                                    <td>{{ pred.student.get_department_display }}</td>
+                                    <td><span class="badge bg-{% if pred.risk_level == 'critical' %}danger{% else %}warning{% endif %}">{{ pred.get_risk_level_display }}</span></td>
+                                    <td>{{ pred.predicted_score|floatformat:1 }}</td>
+                                    <td>{{ pred.student.attendance|floatformat:1 }}%</td>
+                                    <td>
+                                        <a href="{% url 'students:student_detail' pred.student.id %}" class="btn btn-sm btn-info">View</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted">No at-risk students</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

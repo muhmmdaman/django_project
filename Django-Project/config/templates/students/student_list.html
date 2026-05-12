@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Students - Academic Intelligence System{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="mb-1"><i class="bi bi-people-fill me-2"></i>Students</h2>
+        <p class="text-muted mb-0">Manage and view all enrolled students</p>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group me-2">
+            <a href="{% url 'students:upload_students' %}" class="btn btn-outline-primary">
+                <i class="bi bi-cloud-upload me-1"></i>Upload CSV
+            </a>
+            <a href="{% url 'students:upload_marks' %}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload Marks
+            </a>
+        </div>
+        <a href="{% url 'students:add_student' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-1"></i>Add Student
+        </a>
+    </div>
+</div>
+
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted"><i class="bi bi-search me-1"></i>Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Name or enrollment..."
+                       value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted"><i class="bi bi-building me-1"></i>Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for code, name in department_choices %}
+                    <option value="{{ code }}" {% if selected_department == code %}selected{% endif %}>{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted"><i class="bi bi-calendar3 me-1"></i>Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for sem, name in semester_choices %}
+                    <option value="{{ sem }}" {% if selected_semester == sem|stringformat:"d" %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted"><i class="bi bi-exclamation-triangle me-1"></i>Risk</label>
+                <select name="risk_level" class="form-select">
+                    <option value="">All Risks</option>
+                    {% for code, name in risk_choices %}
+                    <option value="{{ code }}" {% if selected_risk == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    {% if search_query or selected_department or selected_semester or selected_risk %}
+                    <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary" title="Clear">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% if search_query or selected_department or selected_semester or selected_risk %}
+<div class="mb-3">
+    <span class="text-muted small">Active filters:</span>
+    {% if search_query %}<span class="badge bg-primary me-1">Search: {{ search_query }}</span>{% endif %}
+    {% if selected_department %}<span class="badge bg-info me-1">Dept: {{ selected_department }}</span>{% endif %}
+    {% if selected_semester %}<span class="badge bg-secondary me-1">Sem: {{ selected_semester }}</span>{% endif %}
+    {% if selected_risk %}<span class="badge badge-risk-{{ selected_risk }} me-1">{{ selected_risk|capfirst }}</span>{% endif %}
+</div>
+{% endif %}
+
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Student List</span>
+        <span class="badge bg-secondary">{{ page_obj.paginator.count }} students</span>
+    </div>
+    <div class="card-body p-0">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Enrollment</th>
+                        <th>Student</th>
+                        <th class="text-center">Dept / Sem</th>
+                        <th class="text-center">Attendance</th>
+                        <th class="text-center">CGPA</th>
+                        <th class="text-center">Risk</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>
+                            <code class="text-primary fw-bold">{{ student.enrollment_number }}</code>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person text-secondary"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ student.user.get_full_name|default:"N/A" }}</strong>
+                                    <div class="small text-muted">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">{{ student.department }}</span>
+                            <div class="small text-muted">Sem {{ student.semester }}</div>
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-bold {% if student.attendance >= 75 %}text-success{% elif student.attendance >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ student.attendance|floatformat:0 }}%
+                            </span>
+                            {% if student.attendance < 75 %}
+                            <div><small class="text-danger"><i class="bi bi-exclamation-circle"></i></small></div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if student.cgpa %}
+                            <span class="fs-5 fw-bold {% if student.cgpa >= 8.5 %}text-success{% elif student.cgpa >= 7 %}text-primary{% elif student.cgpa >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ student.cgpa|floatformat:2 }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if student.prediction %}
+                            <span class="badge badge-risk-{{ student.prediction.risk_level }}">
+                                {{ student.prediction.get_risk_level_display }}
+                            </span>
+                            <div class="small mt-1">
+                                <i class="bi bi-{{ student.prediction.get_trend_icon }} text-{{ student.prediction.get_trend_color }}"></i>
+                            </div>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'students:student_detail' student.pk %}" class="btn btn-outline-primary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'students:download_report' student.pk %}" class="btn btn-outline-success" title="PDF">
+                                    <i class="bi bi-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="card-footer bg-white">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_risk %}&risk_level={{ selected_risk }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_risk %}&risk_level={{ selected_risk }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-4 d-block mb-3 text-muted"></i>
+            <h5 class="text-muted">No students found</h5>
+            <p class="text-muted mb-3">
+                {% if search_query or selected_department or selected_semester or selected_risk %}
+                No students match your filters.
+                {% else %}
+                Get started by adding students.
+                {% endif %}
+            </p>
+            <a href="{% url 'students:add_student' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill me-1"></i>Add Student
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

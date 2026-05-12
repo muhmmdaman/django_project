@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Salary Payment - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'messages:admin_control_panel' %}">Admin Panel</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'students:teacher_salary_list' %}">Teacher Salary Management</a></li>
+                <li class="breadcrumb-item active">Add Salary Payment</li>
+            </ol>
+        </nav>
+        <h2><i class="bi bi-cash-coin me-2"></i>Add Salary Payment</h2>
+        <p class="text-muted">Record a new salary payment for the teacher.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'students:teacher_salary_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-person-vcard me-2"></i>Teacher Information
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Full Name</h6>
+                        <p class="mb-0"><strong>{{ teacher.user.get_full_name }}</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Employee ID</h6>
+                        <p class="mb-0"><strong>{{ teacher.employee_id }}</strong></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Monthly Salary</h6>
+                        <p class="mb-0"><strong style="color: #059669;">₹ {{ teacher.salary_amount|floatformat:2 }}</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-1">Salary Status</h6>
+                        <p class="mb-0">
+                            {% if teacher.salary_status == "paid" %}
+                            <span class="badge bg-success">Paid</span>
+                            {% else %}
+                            <span class="badge bg-warning">Due</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-receipt me-2"></i>Payment Details
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="id_amount" class="form-label">Amount Paid (₹) *</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="invalid-feedback d-block">{{ form.amount.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Amount paid in Indian Rupees</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_payment_date" class="form-label">Payment Date *</label>
+                            {{ form.payment_date }}
+                            {% if form.payment_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.payment_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_payment_method" class="form-label">Payment Method *</label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                        <div class="invalid-feedback d-block">{{ form.payment_method.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">How the payment was made (Bank Transfer, Check, Cash, etc.)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_reference_number" class="form-label">Reference Number</label>
+                        {{ form.reference_number }}
+                        {% if form.reference_number.errors %}
+                        <div class="invalid-feedback d-block">{{ form.reference_number.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Bank reference, check number, UTR, or transaction ID</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_notes" class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Additional notes about this payment (optional)</div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> After recording this payment, the teacher's salary status will automatically be updated to "Paid" and the last paid date will be set to the payment date.
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'students:teacher_salary_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-1"></i>Record Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-lightbulb me-2"></i>Payment Tips
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Amount:</strong> Can be full or partial salary payment
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Reference:</strong> Keep track of transaction IDs
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Method:</strong> Select the appropriate payment mode
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Notes:</strong> Add relevant details for records
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>Recent Payments
+            </div>
+            <div class="card-body">
+                {% if teacher.salary_payments.all %}
+                <div class="list-group list-group-flush">
+                    {% for payment in teacher.salary_payments.all|slice:":3" %}
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">₹ {{ payment.amount|floatformat:2 }}</h6>
+                                <small class="text-muted">{{ payment.payment_date|date:"d M Y" }}</small>
+                            </div>
+                            <small class="badge bg-light text-dark">{{ payment.get_payment_method_display }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No payment records yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

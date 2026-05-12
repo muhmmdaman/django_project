@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Time Slot - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4 animate-fade-in">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable:timetable' %}">Timetable</a></li>
+                <li class="breadcrumb-item active">Delete Time Slot</li>
+            </ol>
+        </nav>
+        <h2 class="text-danger"><i class="bi bi-trash3 me-2"></i>Delete Time Slot</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning d-flex align-items-center mb-4">
+                    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Warning:</strong> This action cannot be undone. Are you sure you want to delete this time slot?
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="bi bi-book me-2 text-primary"></i>{{ timeslot.subject.name }}
+                        </h5>
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <th style="width: 120px;"><i class="bi bi-calendar-day me-2"></i>Day:</th>
+                                <td>{{ timeslot.get_day_of_week_display }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-clock me-2"></i>Time:</th>
+                                <td>{{ timeslot.start_time|time:"H:i" }} - {{ timeslot.end_time|time:"H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-building me-2"></i>Department:</th>
+                                <td>{{ timeslot.department }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-mortarboard me-2"></i>Semester:</th>
+                                <td>{{ timeslot.semester }}</td>
+                            </tr>
+                            {% if timeslot.faculty %}
+                            <tr>
+                                <th><i class="bi bi-person me-2"></i>Faculty:</th>
+                                <td>{{ timeslot.faculty.get_full_name }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if timeslot.room_number %}
+                            <tr>
+                                <th><i class="bi bi-geo-alt me-2"></i>Room:</th>
+                                <td>{{ timeslot.room_number }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash3 me-2"></i>Yes, Delete
+                        </button>
+                        <a href="{% url 'timetable:timetable' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load messaging_extras %}
+
+{% block title %}Inbox - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-envelope-fill me-2"></i>Inbox</h2>
+        <p class="text-muted">View your messages and broadcasts</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'messaging:send_message' %}" class="btn btn-primary me-2">
+            <i class="bi bi-pencil-square me-1"></i>New Message
+        </a>
+        {% if request.user.role == 'teacher' or request.user.is_staff %}
+        <a href="{% url 'messaging:send_broadcast' %}" class="btn btn-success">
+            <i class="bi bi-megaphone me-1"></i>Broadcast
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if unread_count > 0 %}
+<div class="alert alert-info alert-dismissible fade show">
+    <i class="bi bi-info-circle me-2"></i>
+    You have <strong>{{ unread_count }}</strong> unread message(s).
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link {% if view_type == 'all' %}active{% endif %}" href="?view=all">
+            <i class="bi bi-collection me-1"></i>All ({{ all_messages|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if view_type == 'private' %}active{% endif %}" href="?view=private">
+            <i class="bi bi-inbox me-1"></i>Private ({{ received_messages|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if view_type == 'broadcast' %}active{% endif %}" href="?view=broadcast">
+            <i class="bi bi-megaphone me-1"></i>Broadcasts ({{ broadcasts|length }})
+        </a>
+    </li>
+</ul>
+
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if all_messages %}
+        <div class="list-group list-group-flush">
+            {% for msg in all_messages %}
+            <a href="{% url 'messaging:message_detail' msg.pk %}"
+               class="list-group-item list-group-item-action message-item {% if msg|is_broadcast %}broadcast-item{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="me-3 flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            {% if msg|is_broadcast %}
+                            <span class="badge bg-warning text-dark me-2">
+                                <i class="bi bi-megaphone-fill me-1"></i>Broadcast
+                            </span>
+                            {% else %}
+                            <span class="badge bg-primary me-2">
+                                <i class="bi bi-chat-left me-1"></i>Private
+                            </span>
+                            {% endif %}
+
+                            <strong>{{ msg.sender.get_full_name|default:msg.sender.username }}</strong>
+
+                            {% if msg|is_broadcast and msg.department %}
+                            <span class="badge bg-secondary ms-2">{{ msg.department }}</span>
+                            {% elif msg|is_broadcast %}
+                            <span class="badge bg-info ms-2">Global</span>
+                            {% endif %}
+                        </div>
+                        <p class="mb-1 text-muted">{{ msg.content|truncatewords:30 }}</p>
+                        <small class="text-muted">{{ msg.timestamp|date:"M d, Y g:i A" }}</small>
+                    </div>
+                    <div class="text-end message-status-container" style="min-width: 100px;">
+                        
+                        <div class="message-status {% if msg.read_at %}seen{% else %}unread{% endif %}"
+                             title="{% if msg.read_at %}You have read this{% else %}Unread{% endif %}">
+                            {% if msg.read_at %}✓✓{% else %}●{% endif %}
+                        </div>
+                        <small class="message-timestamp">{{ msg.timestamp|timeuntil }} ago</small>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-4 text-muted"></i>
+            <p class="text-muted mt-3">No messages yet.</p>
+            <p class="text-muted small">Start a conversation or wait for broadcasts from your teachers.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.message-item {
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+.message-item:hover {
+    background-color: var(--bg-hover);
+    border-left-color: var(--accent);
+}
+.broadcast-item {
+    border-left-color: var(--warning);
+}
+</style>
+
+<script>
+    // Auto-refresh unread count
+    function updateUnreadCount() {
+        fetch("{% url 'messaging:unread_count' %}")
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.querySelector('.navbar .badge');
+                if (badge) {
+                    badge.textContent = data.count;
+                    badge.style.display = data.count > 0 ? 'inline' : 'none';
+                }
+            });
+    }
+
+    // Update every 30 seconds
+    setInterval(updateUnreadCount, 30000);
+</script>
+{% endblock %}

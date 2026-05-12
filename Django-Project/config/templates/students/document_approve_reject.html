@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve/Reject Document{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-file-earmark-check me-2"></i>Document Review</h2>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'students:admin_document_approval' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Teacher Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Name:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {{ document.teacher.user.get_full_name }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Department:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-primary">{{ document.teacher.get_department_display }}</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Designation:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {{ document.teacher.designation }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <strong>Email:</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {{ document.teacher.user.email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Document Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Document Name:</strong><br>
+                        {{ document.document_name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Uploaded:</strong><br>
+                        {{ document.uploaded_at|date:"F d, Y H:i" }}
+                    </div>
+                    {% if document.document %}
+                    <div>
+                        <strong>File:</strong><br>
+                        <a href="{{ document.document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>View Document
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Subjects Requested</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for subject in document.subjects.all %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ subject.code }}</strong><br>
+                                    <small class="text-muted">{{ subject.name }}</small>
+                                </div>
+                                <span class="badge bg-info">Sem {{ subject.semester }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        {% if document.status == 'pending' %}
+                        <i class="bi bi-hourglass-split me-1"></i>Pending Review
+                        {% elif document.status == 'approved' %}
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                        {% else %}
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            {{ form.status }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.approval_notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ form.approval_notes }}
+                            <small class="form-text text-muted d-block mt-2">
+                                Add approval or rejection notes for the teacher
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-lg btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Save Decision
+                            </button>
+                            <a href="{% url 'students:admin_document_approval' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

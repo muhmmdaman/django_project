@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'students:student_list' %}">Students</a></li>
+                <li class="breadcrumb-item active">{{ title }}</li>
+            </ol>
+        </nav>
+        <h2 class="mb-1"><i class="bi bi-cloud-upload-fill me-2"></i>{{ title }}</h2>
+        <p class="text-muted mb-0">Bulk upload data via CSV file</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Upload CSV File
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label class="form-label">Select CSV File</label>
+                        {{ form.csv_file }}
+                        {% if form.csv_file.errors %}
+                        <div class="invalid-feedback d-block">{{ form.csv_file.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">{{ form.csv_file.help_text }}</div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>CSV Format Requirements</h6>
+                        <p class="mb-2">Your CSV file must include a header row with the following columns:</p>
+                        <code class="d-block bg-light p-2 rounded">{{ sample_headers }}</code>
+                        <hr>
+                        <p class="mb-0 small">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            Make sure there are no duplicate entries and all required fields are filled.
+                        </p>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i>Upload & Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-file-text me-2"></i>Sample CSV Format
+            </div>
+            <div class="card-body">
+                {% if 'student' in title|lower %}
+                <pre class="bg-light p-3 rounded small mb-0">first_name,last_name,email,enrollment_number,department,semester,attendance
+John,Doe,john.doe@university.edu,2024CSE001,CSE,3,85.5
+Jane,Smith,jane.smith@university.edu,2024IT002,IT,2,92.0
+Mike,Wilson,mike.wilson@university.edu,2024ECE003,ECE,4,78.0</pre>
+                {% else %}
+                <pre class="bg-light p-3 rounded small mb-0">enrollment_number,subject_code,score,exam_type
+2024CSE001,CS301,85.5,END
+2024CSE001,CS302,78.0,END
+2024IT002,IT301,92.0,END</pre>
+                {% endif %}
+            </div>
+        </div>
+
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-check-circle me-2"></i>Valid Values Reference
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Departments</h6>
+                        <ul class="list-unstyled small">
+                            <li><code>CSE</code> - Computer Science & Engineering</li>
+                            <li><code>IT</code> - Information Technology</li>
+                            <li><code>ECE</code> - Electronics & Communication</li>
+                            <li><code>EEE</code> - Electrical & Electronics</li>
+                            <li><code>ME</code> - Mechanical Engineering</li>
+                            <li><code>CE</code> - Civil Engineering</li>
+                            <li><code>MBA</code> - Business Administration</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Exam Types</h6>
+                        <ul class="list-unstyled small">
+                            <li><code>MID1</code> - Mid Semester 1</li>
+                            <li><code>MID2</code> - Mid Semester 2</li>
+                            <li><code>END</code> - End Semester (default)</li>
+                            <li><code>INTERNAL</code> - Internal Assessment</li>
+                        </ul>
+                        <h6 class="mt-3">Other Fields</h6>
+                        <ul class="list-unstyled small">
+                            <li><code>semester</code> - 1 to 8</li>
+                            <li><code>attendance</code> - 0 to 100</li>
+                            <li><code>score</code> - 0 to 100</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

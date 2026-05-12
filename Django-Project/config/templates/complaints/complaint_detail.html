@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Details - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-exclamation-lg me-2"></i>{{ complaint.title }}</h2>
+        <p class="text-muted">Complaint from {{ complaint.student.user.get_full_name }}</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'complaints:complaints_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Complaint Details</span>
+                    <span class="badge {% if complaint.status == 'pending' %}bg-warning{% elif complaint.status == 'in_progress' %}bg-info{% else %}bg-success{% endif %}">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong></p>
+                <p>{{ complaint.description }}</p>
+
+                {% if complaint.resolution_notes %}
+                <hr>
+                <p><strong>Resolution Notes:</strong></p>
+                <p>{{ complaint.resolution_notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">Information</div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Student:</span>
+                        <strong>{{ complaint.student.user.get_full_name }}</strong>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Type:</span>
+                        <span class="badge bg-secondary">{{ complaint.get_complaint_type_display }}</span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Status:</span>
+                        <span class="badge {% if complaint.status == 'pending' %}bg-warning{% elif complaint.status == 'in_progress' %}bg-info{% else %}bg-success{% endif %}">
+                            {{ complaint.get_status_display }}
+                        </span>
+                    </li>
+                    <li class="d-flex justify-content-between py-2">
+                        <span>Submitted:</span>
+                        <strong>{{ complaint.created_at|date:"M d, Y" }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {% if is_admin %}
+        <div class="card">
+            <div class="card-header">Update Status</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resolution Notes</label>
+                        {{ form.resolution_notes }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check me-1"></i>Update
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

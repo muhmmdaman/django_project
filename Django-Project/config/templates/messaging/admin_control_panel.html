@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Control Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    
+    <div class="row mb-5">
+        <div class="col-12">
+            <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);">
+                <h1 class="mb-2">
+                    <i class="bi bi-shield-lock"></i> Admin Control Panel
+                </h1>
+                <p class="mb-0 opacity-90">Manage teachers, students, messages, and system activities</p>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row g-4 mb-5">
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #0ea5e9, #06b6d4);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(15, 165, 233, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-person-badge-fill" style="font-size: 1.5rem; color: #0ea5e9;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">Teacher Management</h5>
+                    </div>
+                    <p class="text-muted small mb-3">Create, edit, and delete teacher accounts. Manage departments and salary records.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:teacher_list' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-list-ul me-2"></i>View All Teachers
+                        </a>
+                        <a href="{% url 'messaging:teacher_add' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-plus-circle me-2"></i>Add New Teacher
+                        </a>
+                        <a href="{% url 'messaging:salary_history' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-cash-coin me-2"></i>Salary History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #f59e0b, #f97316);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(245, 158, 11, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-exclamation-circle-fill" style="font-size: 1.5rem; color: #f59e0b;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">User Management</h5>
+                    </div>
+                    <p class="text-muted small mb-3">Ban, mute, or restrict users who violate community guidelines.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:admin_users_list' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-people-fill me-2"></i>All Users
+                        </a>
+                        <a href="{% url 'messaging:admin_users_list' %}?restricted=true" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-ban me-2"></i>Restricted Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #a855f7);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(139, 92, 246, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-envelope-fill" style="font-size: 1.5rem; color: #8b5cf6;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">Message Management</h5>
+                    </div>
+                    <p class="text-muted small mb-3">View all system messages, delete inappropriate content, and recover.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:admin_messages_list' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-chat-dots me-2"></i>All Messages
+                        </a>
+                        <a href="{% url 'messaging:admin_messages_list' %}?deleted=true" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-trash me-2"></i>Deleted Messages
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #10b981, #14b8a6);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-graph-up-arrow" style="font-size: 1.5rem; color: #10b981;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">Activity Logs</h5>
+                    </div>
+                    <p class="text-muted small mb-3">Monitor all user activities, logins, and system actions with full audit trail.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:activity_log_list' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-file-earmark-text me-2"></i>View Activity Logs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ef4444, #dc2626);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(239, 68, 68, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-megaphone-fill" style="font-size: 1.5rem; color: #ef4444;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">Broadcasting</h5>
+                    </div>
+                    <p class="text-muted small mb-3">Send messages to specific departments or globally to all users.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:send_department_broadcast' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-diagram-2 me-2"></i>Department Broadcast
+                        </a>
+                        <a href="{% url 'messaging:send_global_broadcast' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-broadcast me-2"></i>Global Broadcast
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #3b82f6, #2563eb);"></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div style="width: 50px; height: 50px; background: rgba(59, 130, 246, 0.15); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-speedometer2" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                        </div>
+                        <h5 class="mb-0 ms-3">Dashboard</h5>
+                    </div>
+                    <p class="text-muted small mb-3">View system statistics, charts, and message analytics.</p>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'messaging:admin_dashboard' %}" class="btn btn-sm btn-outline-secondary text-start">
+                            <i class="bi bi-graph-up me-2"></i>View Metrics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row mb-4">
+        <div class="col-md-3" style="display: none;">
+            <div class="card border-left border-primary">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase mb-2">Total Teachers</h6>
+                    <h2 class="mb-0 text-primary">14</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3" style="display: none;">
+            <div class="card border-left border-warning">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase mb-2">Restricted Users</h6>
+                    <h2 class="mb-0 text-warning">3</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3" style="display: none;">
+            <div class="card border-left border-success">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase mb-2">Messages Today</h6>
+                    <h2 class="mb-0 text-success">42</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3" style="display: none;">
+            <div class="card border-left border-danger">
+                <div class="card-body text-center">
+                    <h6 class="text-muted text-uppercase mb-2">Pending Salaries</h6>
+                    <h2 class="mb-0 text-danger">5</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="bi bi-lightning-charge me-2" style="color: #f59e0b;"></i>
+                Quick Actions
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-sm-6 col-md-3">
+                    <a href="{% url 'messaging:teacher_add' %}" class="btn btn-sm btn-primary w-100">
+                        <i class="bi bi-person-plus-fill me-2"></i>Add Teacher
+                    </a>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <a href="{% url 'messaging:send_global_broadcast' %}" class="btn btn-sm btn-danger w-100">
+                        <i class="bi bi-broadcast me-2"></i>Global Broadcast
+                    </a>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <a href="{% url 'messaging:admin_users_list' %}" class="btn btn-sm btn-warning w-100">
+                        <i class="bi bi-ban me-2"></i>Ban User
+                    </a>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <a href="{% url 'messaging:activity_log_list' %}" class="btn btn-sm btn-secondary w-100">
+                        <i class="bi bi-file-text me-2"></i>View Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.btn-outline-secondary {
+    border-color: #d1d5db;
+    color: #555555;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+</style>
+{% endblock %}

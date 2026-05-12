@@ -1,0 +1,59 @@
+
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="filterForm" class="row g-3">
+            
+            <div class="col-md-3">
+                <label for="view_type" class="form-label">Message Type</label>
+                <select class="form-select" id="view_type" name="view_type">
+                    <option value="all" {% if request.GET.view_type == 'all' or not request.GET.view_type %}selected{% endif %}>All</option>
+                    <option value="private" {% if request.GET.view_type == 'private' %}selected{% endif %}>Private</option>
+                    <option value="broadcast" {% if request.GET.view_type == 'broadcast' %}selected{% endif %}>Broadcast</option>
+                    <option value="department" {% if request.GET.view_type == 'department' %}selected{% endif %}>Department</option>
+                </select>
+            </div>
+
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">From</label>
+                <input type="date" class="form-control" id="date_from" name="date_from"
+                       value="{{ request.GET.date_from|default:'' }}">
+            </div>
+
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">To</label>
+                <input type="date" class="form-control" id="date_to" name="date_to"
+                       value="{{ request.GET.date_to|default:'' }}">
+            </div>
+
+            
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       placeholder="Search message content..." value="{{ request.GET.search|default:'' }}">
+            </div>
+
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-funnel"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        
+        <div class="mt-2">
+            <a href="{{ reset_url|default:request.path }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Reset Filters
+            </a>
+        </div>
+    </div>
+</div>

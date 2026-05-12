@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Messages{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3">All Messages</h1>
+            <p class="text-muted">Admin-only view of all system messages</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-info">Total Messages: {{ total_messages }}</span>
+        </div>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="sender" class="form-label">Sender</label>
+                    <input type="text" class="form-control" id="sender" name="sender"
+                           placeholder="Search sender..." value="{{ request.GET.sender|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="recipient_type" class="form-label">Recipient Type</label>
+                    <select class="form-select" id="recipient_type" name="recipient_type">
+                        <option value="">All Types</option>
+                        <option value="individual" {% if request.GET.recipient_type == 'individual' %}selected{% endif %}>Individual</option>
+                        <option value="department" {% if request.GET.recipient_type == 'department' %}selected{% endif %}>Department</option>
+                        <option value="all_users" {% if request.GET.recipient_type == 'all_users' %}selected{% endif %}>All Users</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from"
+                           value="{{ request.GET.date_from|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label">To</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to"
+                           value="{{ request.GET.date_to|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" class="form-check-input" id="deleted_only" name="deleted_only"
+                               {% if request.GET.deleted_only %}checked{% endif %}>
+                        <label class="form-check-label" for="deleted_only">Deleted Only</label>
+                    </div>
+                </div>
+            </form>
+
+            
+            <div class="row g-3 mt-2">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="search" placeholder="Search message content..."
+                           value="{{ request.GET.search|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Filter Messages</button>
+                    <a href="{% url 'messaging:admin_messages_list' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Sender</th>
+                    <th>Recipient</th>
+                    <th>Type</th>
+                    <th>Preview</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for message in messages %}
+                <tr {% if message.is_deleted %}class="table-danger"{% endif %}>
+                    <td>
+                        <strong>{{ message.sender.get_full_name }}</strong>
+                        <br><small class="text-muted">{{ message.sender.email }}</small>
+                    </td>
+                    <td>
+                        {% if message.receiver %}
+                            {{ message.receiver.get_full_name }}
+                        {% elif message.receiver_type == 'all_users' %}
+                            <span class="badge bg-info">All Users</span>
+                        {% elif message.receiver_type == 'department' %}
+                            <span class="badge bg-warning">Dept: {{ message.department }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ message.get_receiver_type_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if message.message_type == 'private' %}primary{% else %}success{% endif %}">
+                            {{ message.get_message_type_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <small>{{ message.content|truncatewords:15 }}</small>
+                    </td>
+                    <td>
+                        {% if message.is_deleted %}
+                            <span class="badge bg-danger">Deleted</span>
+                        {% else %}
+                            <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small>{{ message.timestamp|date:"M d, Y H:i" }}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'messaging:message_detail' message.id %}" class="btn btn-info" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if not message.is_deleted %}
+                                <button class="btn btn-danger" onclick="softDeleteMessage({{ message.id }})" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            {% else %}
+                                <button class="btn btn-warning" onclick="recoverMessage({{ message.id }})" title="Recover">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        No messages found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+function softDeleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        fetch(`/messages/admin/messages/${messageId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+
+function recoverMessage(messageId) {
+    if (confirm('Are you sure you want to recover this message?')) {
+        fetch(`/messages/admin/messages/${messageId}/recover/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

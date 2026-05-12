@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messaging Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h3 mb-4">Messaging Dashboard</h1>
+
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Conversations</h6>
+                            <h2 class="mb-0">{{ total_conversations }}</h2>
+                        </div>
+                        <div class="display-4 text-primary opacity-25">
+                            <i class="bi bi-chat-dots"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Active Users</h6>
+                            <h2 class="mb-0">{{ total_active_users }}</h2>
+                        </div>
+                        <div class="display-4 text-success opacity-25">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Restricted Users</h6>
+                            <h2 class="mb-0">{{ restricted_users }}</h2>
+                        </div>
+                        <div class="display-4 text-danger opacity-25">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Messages This Week</h6>
+                            <h2 class="mb-0">{{ messages_this_week }}</h2>
+                        </div>
+                        <div class="display-4 text-warning opacity-25">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row mb-4">
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Message Volume (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="messageVolumeChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Message Type Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="messageTypeChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row mb-4">
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top 10 Active Users</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th class="text-end">Messages</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in top_active_users %}
+                            <tr>
+                                <td>{{ user.user.get_full_name }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ user.count }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-3">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Admin Actions (Last 10)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recent_admin_actions %}
+                            <tr>
+                                <td><small>{% if activity.user %}{{ activity.user.username }}{% else %}Unknown{% endif %}</small></td>
+                                <td>
+                                    <span class="badge bg-{% if 'banned' in activity.action_type %}danger{% elif 'muted' in activity.action_type %}warning{% else %}primary{% endif %}" style="font-size: 0.75rem;">
+                                        {{ activity.action_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if activity.target_user %}
+                                        <small>{{ activity.target_user.username }}</small>
+                                    {% else %}
+                                        <small>—</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ activity.created_at|date:"M d H:i" }}</small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">No actions</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    {% if failed_broadcasts %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Failed Broadcasts</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Message</th>
+                                <th>Recipients</th>
+                                <th>Delivered</th>
+                                <th>Failed</th>
+                                <th>Error</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for broadcast in failed_broadcasts %}
+                            <tr>
+                                <td>{{ broadcast.message.content|truncatewords:10 }}</td>
+                                <td>{{ broadcast.total_recipients }}</td>
+                                <td>{{ broadcast.delivered_count }}</td>
+                                <td class="text-danger"><strong>{{ broadcast.failed_count }}</strong></td>
+                                <td><small>{{ broadcast.error_log|truncatewords:5 }}</small></td>
+                                <td><small>{{ broadcast.started_at|date:"M d H:i" }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Message Volume Chart
+const volumeCtx = document.getElementById('messageVolumeChart').getContext('2d');
+new Chart(volumeCtx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_days|safe }},
+        datasets: [{
+            label: 'Messages',
+            data: {{ chart_volumes|safe }},
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#0d6efd'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Message Type Distribution Chart
+const typeCtx = document.getElementById('messageTypeChart').getContext('2d');
+new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ message_type_labels|safe }},
+        datasets: [{
+            data: {{ message_type_data|safe }},
+            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+</script>
+{% endblock %}

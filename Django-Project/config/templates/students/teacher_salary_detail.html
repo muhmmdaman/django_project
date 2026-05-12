@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Salary Details - Academic Intelligence System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'messages:admin_control_panel' %}">Admin Panel</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'students:teacher_salary_list' %}">Teacher Salary Management</a></li>
+                <li class="breadcrumb-item active">Salary Details</li>
+            </ol>
+        </nav>
+        <h2><i class="bi bi-file-earmark-text me-2"></i>Salary Details</h2>
+        <p class="text-muted">Complete salary and payment history for {{ teacher.user.get_full_name }}.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'students:edit_teacher_salary' teacher.id %}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-pencil me-1"></i>Edit Salary
+        </a>
+        <a href="{% url 'students:add_salary_payment' teacher.id %}" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i>Add Payment
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-vcard me-2"></i>Teacher Information
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Full Name</h6>
+                    <p class="mb-0"><strong>{{ teacher.user.get_full_name }}</strong></p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Email</h6>
+                    <p class="mb-0"><strong>{{ teacher.user.email }}</strong></p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Employee ID</h6>
+                    <p class="mb-0"><strong>{{ teacher.employee_id }}</strong></p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Department</h6>
+                    <p class="mb-0"><strong>{{ teacher.get_department_display }}</strong></p>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Designation</h6>
+                    <p class="mb-0"><strong>{{ teacher.designation }}</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-currency-rupee me-2"></i>Salary Summary
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Monthly Salary</h6>
+                    <p class="mb-0"><strong style="color: #059669; font-size: 1.25rem;">₹ {{ teacher.salary_amount|floatformat:2 }}</strong></p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Salary Status</h6>
+                    <p class="mb-0">
+                        {% if teacher.salary_status == "paid" %}
+                        <span class="badge bg-success" style="font-size: 0.95rem;">Paid</span>
+                        {% else %}
+                        <span class="badge bg-warning" style="font-size: 0.95rem;">Due</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Last Paid Date</h6>
+                    <p class="mb-0">
+                        {% if teacher.last_paid_date %}
+                        <strong>{{ teacher.last_paid_date|date:"d M Y" }}</strong>
+                        {% else %}
+                        <span class="text-muted">No payment record</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Next Payment Due</h6>
+                    <p class="mb-0">
+                        {% if teacher.next_payment_date %}
+                        <strong>{{ teacher.next_payment_date|date:"d M Y" }}</strong>
+                        {% else %}
+                        <span class="text-muted">Not scheduled</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Payments</h6>
+                <p class="mb-0" style="font-size: 1.5rem; font-weight: bold;">{{ salary_payments|length }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Amount Paid</h6>
+                <p class="mb-0" style="font-size: 1.5rem; font-weight: bold; color: #059669;">₹ {{ total_paid|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Average Payment</h6>
+                <p class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
+                    {% if salary_payments %}
+                    ₹ {{ total_paid|divide:salary_payments|length|floatformat:2 }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Months Covered</h6>
+                <p class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
+                    {% if total_paid > 0 and teacher.salary_amount > 0 %}
+                    {{ total_paid|divide:teacher.salary_amount|floatformat:1 }}
+                    {% else %}
+                    0
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table me-2"></i>Payment History
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference Number</th>
+                    <th>Processed By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in salary_payments %}
+                <tr>
+                    <td>
+                        <strong>{{ payment.payment_date|date:"d M Y" }}</strong>
+                    </td>
+                    <td>
+                        <span style="color: #059669; font-weight: bold;">₹ {{ payment.amount|floatformat:2 }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark">{{ payment.get_payment_method_display }}</span>
+                    </td>
+                    <td>
+                        {% if payment.reference_number %}
+                        <code class="bg-light p-1">{{ payment.reference_number }}</code>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small>{{ payment.processed_by.get_full_name }}</small>
+                    </td>
+                    <td>
+                        {% if payment.notes %}
+                        <small class="text-muted">{{ payment.notes|truncatewords:5 }}</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">No payment records found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if not salary_payments %}
+    <div class="card-footer text-center">
+        <a href="{% url 'students:add_salary_payment' teacher.id %}" class="btn btn-sm btn-success">
+            <i class="bi bi-plus-circle me-1"></i>Add First Payment
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+
+{% if teacher.payment_notes %}
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-sticky me-2"></i>Notes
+    </div>
+    <div class="card-body">
+        <p class="mb-0">{{ teacher.payment_notes|linebreaks }}</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    code {
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}

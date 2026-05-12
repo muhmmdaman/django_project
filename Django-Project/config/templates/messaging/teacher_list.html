@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teachers - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 text-primary">
+            <i class="bi bi-people"></i> Teachers
+        </h1>
+        <a href="{% url 'messaging:teacher_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Teacher
+        </a>
+    </div>
+
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    {{ form.department }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.salary_status }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.search }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr class="table-light">
+                        <th>Name</th>
+                        <th>Employee ID</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Salary Status</th>
+                        <th>Last Paid</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                        <tr>
+                            <td>
+                                <strong>{{ teacher.user.get_full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ teacher.user.email }}</small>
+                            </td>
+                            <td>{{ teacher.employee_id }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ teacher.get_department_display }}</span>
+                            </td>
+                            <td>{{ teacher.designation }}</td>
+                            <td>
+                                {% if teacher.salary_status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Due</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if teacher.last_paid_date %}
+                                    {{ teacher.last_paid_date|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'messaging:teacher_detail' teacher.id %}" class="btn btn-outline-primary" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'messaging:teacher_edit' teacher.id %}" class="btn btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if teacher.salary_status == 'due' %}
+                                        <a href="{% url 'messaging:teacher_update_salary' teacher.id %}" class="btn btn-outline-success" title="Mark Paid">
+                                            <i class="bi bi-currency-rupee"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'messaging:teacher_delete' teacher.id %}" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No teachers found
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
+    {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
