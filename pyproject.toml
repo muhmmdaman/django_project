@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "academic-intelligence-system"
+version = "1.0.0"
+description = "Academic Intelligence System with Django"
+requires-python = ">=3.13"
+
+[tool.vercel]
+entrypoint = "wsgi.py"
+

@@ -1,0 +1,26 @@
+{
+  "buildCommand": "pip install -r requirements.txt && cd Django-Project/config && python manage.py collectstatic --noinput --clear",
+  "outputDirectory": "Django-Project/config/staticfiles",
+  "devCommand": "cd Django-Project/config && python manage.py runserver 0.0.0.0:8000",
+  "framework": "django",
+  "python": {
+    "version": "3.13"
+  },
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "config.settings",
+    "DJANGO_DEBUG": "False"
+  },
+  "builds": [
+    {
+      "src": "wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "wsgi.py"
+    }
+  ]
+}
+
