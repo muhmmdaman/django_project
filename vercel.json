@@ -3,9 +3,6 @@
   "outputDirectory": "Django-Project/config/staticfiles",
   "devCommand": "cd Django-Project/config && python manage.py runserver 0.0.0.0:8000",
   "framework": "django",
-  "python": {
-    "version": "3.13"
-  },
   "env": {
     "DJANGO_SETTINGS_MODULE": "config.settings",
     "DJANGO_DEBUG": "False"
@@ -23,4 +20,3 @@
     }
   ]
 }
-
