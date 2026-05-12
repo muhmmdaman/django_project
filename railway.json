@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd Django-Project/config && pip install -r ../../requirements.txt && python manage.py collectstatic --noinput",
+  "startCommand": "cd Django-Project/config && python manage.py migrate && gunicorn config.wsgi"
+}
