@@ -20,9 +20,11 @@ from django.core.management import call_command
 django.setup()
 
 # Collect static files if not already done
-if not os.path.exists(os.path.join(os.path.dirname(__file__), "Django-Project", "config", "staticfiles")):
+if not os.path.exists(
+    os.path.join(os.path.dirname(__file__), "Django-Project", "config", "staticfiles")
+):
     try:
-        call_command('collectstatic', '--noinput', '--clear')
+        call_command("collectstatic", interactive=False, clear=True, verbosity=0)
     except Exception as e:
         print(f"Warning: Could not collect static files: {e}")
 
